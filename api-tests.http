@@ -1,0 +1,158 @@
+### Переменные
+@baseUrl = http://localhost:3000
+@restaurantId = 1
+
+### ============================================
+### РЕСТОРАНЫ
+### ============================================
+
+### 1. Получить все рестораны
+GET {{baseUrl}}/restaurants
+Accept: application/json
+
+### 2. Получить ресторан по ID
+GET {{baseUrl}}/restaurants/{{restaurantId}}
+Accept: application/json
+
+### 3. Проверить доступность
+GET {{baseUrl}}/restaurants/1/availability?date=2025-12-25&time=19:00
+Accept: application/json
+
+### ============================================
+### БРОНИРОВАНИЯ
+### ============================================
+
+### 4. Получить все бронирования
+GET {{baseUrl}}/bookings
+Accept: application/json
+
+### 5. Создать бронирование
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "restaurantId": 1,
+  "guestName": "HTTP Test User",
+  "guestCount": 4,
+  "bookingDate": "2025-12-25",
+  "bookingTime": "19:00"
+}
+
+### 6. Получить бронирование по ID
+GET {{baseUrl}}/bookings/1
+Accept: application/json
+
+### 7. Получить бронирования по ресторану
+GET {{baseUrl}}/bookings/restaurant/1
+Accept: application/json
+
+### 8. Получить статистику ресторана
+GET {{baseUrl}}/bookings/restaurant/1/stats
+Accept: application/json
+
+### 9. Получить бронирования по статусу
+GET {{baseUrl}}/bookings?status=CONFIRMED
+Accept: application/json
+
+### 10. Отменить бронирование
+DELETE {{baseUrl}}/bookings/1
+Accept: application/json
+
+### ============================================
+### ТЕСТОВЫЕ СЦЕНАРИИ
+### ============================================
+
+### Сценарий 1: Создать бронирование и проверить статус
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "restaurantId": 2,
+  "guestName": "Test Scenario 1",
+  "guestCount": 2,
+  "bookingDate": "2025-12-30",
+  "bookingTime": "18:30"
+}
+
+> {%
+    client.test("Booking created", function() {
+        client.assert(response.status === 201 || response.status === 200);
+        client.assert(response.body.success === true);
+        client.global.set("lastBookingId", response.body.data.id);
+    });
+%}
+
+### Проверить созданное бронирование (через 6 секунд)
+GET {{baseUrl}}/bookings/{{lastBookingId}}
+Accept: application/json
+
+> {%
+    client.test("Booking is confirmed", function() {
+        client.assert(response.body.data.status === "CONFIRMED" ||
+            response.body.data.status === "CHECKING_AVAILABILITY");
+    });
+%}
+
+### Сценарий 2: Создать несколько бронирований
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "restaurantId": 3,
+  "guestName": "Batch Test 1",
+  "guestCount": 6,
+  "bookingDate": "2025-12-31",
+  "bookingTime": "20:00"
+}
+
+###
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "restaurantId": 3,
+  "guestName": "Batch Test 2",
+  "guestCount": 4,
+  "bookingDate": "2025-12-31",
+  "bookingTime": "21:00"
+}
+
+###
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "restaurantId": 4,
+  "guestName": "Batch Test 3",
+  "guestCount": 3,
+  "bookingDate": "2026-01-01",
+  "bookingTime": "19:00"
+}
+
+### ============================================
+### ПРОВЕРКА КОНФЛИКТОВ
+### ============================================
+
+### Создать первое бронирование
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "restaurantId": 1,
+  "guestName": "First Booking",
+  "guestCount": 2,
+  "bookingDate": "2025-12-28",
+  "bookingTime": "19:00"
+}
+
+### Попытаться создать конфликтующее бронирование (то же время)
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "restaurantId": 1,
+  "guestName": "Conflicting Booking",
+  "guestCount": 3,
+  "bookingDate": "2025-12-28",
+  "bookingTime": "19:00"
+}

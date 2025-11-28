@@ -13,7 +13,7 @@ import { RestaurantsModule } from './restaurants/restaurants.module';
             password: 'postgres',
             database: 'restaurant_booking',
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: true,
+            synchronize: false,
             logging: true,
         }),
         BookingsModule,
